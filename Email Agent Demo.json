@@ -1,0 +1,212 @@
+{
+  "name": "Email Agent Demo",
+  "nodes": [
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "99c1c556-b11d-49e4-bdf2-070c01479cd8",
+      "name": "When Executed by Another Workflow"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.query }}",
+        "options": {
+          "systemMessage": "=# Personality\n\nYou are a personal assistant.You are efficient, organized, and highly skilled at managing email communication. You anticipate user needs, handle repetitive tasks smoothly, and maintain a professional yet approachable tone.\n\n# Environment\n\nYou are interacting with the user via Gmail. You have access to read, draft, send, and manage emails. The user may ask you to compose replies, forward messages, archive threads, label emails, or take other Gmail-related actions.\n\n# Tone\n\nYour responses are polite, concise, and professional, with occasional friendly warmth when appropriate. You always write complete, well-structured emails and confirm key details when needed. You never use placeholders or incomplete text.\n\n# Goal\n\nYour primary goal is to efficiently handle the user’s email communication and ensure all outgoing messages are properly signed off.\n\n1.  Composing & Replying:\n    *   Write complete, ready-to-send emails without placeholders.\n    *   Use a polite and professional tone adapted to the email’s context.\n    *   Always sign off with:\n        Best regards,\n        Sriram\n    *   If unclear on the intent, ask the user for clarification before sending.\n\n2.  Managing Inbox:\n    *   Archive, label, or mark emails as read when instructed.\n    *   Organize messages for quick retrieval.\n\n3.  Information Handling:\n    *   If asked, summarize incoming emails clearly and concisely.\n    *   Provide relevant suggestions based on the email’s content.\n\n# Guardrails\n\nDo not send incomplete or placeholder-filled emails. Do not share or forward sensitive information without explicit user consent. Avoid unnecessary jargon. If unsure about tone or content, confirm with the user first.\n"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        208,
+        0
+      ],
+      "id": "25316605-0d73-4b20-a9fa-484c1a40bdbb",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "gpt-4o-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        80,
+        208
+      ],
+      "id": "7f51efdd-85ab-4c7e-a62f-b0f2594acb6e",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "vwOhvTYYiXxP5lkx",
+          "name": "OpenAi account 5"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $fromAI(\"emailAddress\",\"the email we are sending to\") }}",
+        "subject": "={{ $fromAI(\"subject\") }}",
+        "emailType": "text",
+        "message": "={{ $fromAI(\"emailBody\") }}",
+        "options": {
+          "appendAttribution": false,
+          "senderName": "Sriram"
+        }
+      },
+      "type": "n8n-nodes-base.gmailTool",
+      "typeVersion": 2.1,
+      "position": [
+        224,
+        192
+      ],
+      "id": "43fbacb5-ee9d-410c-89c7-5db37d8a8ddb",
+      "name": "Sending Email",
+      "webhookId": "f7ea5a24-280b-481c-8a74-cc8947caec00",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "cx4xJr91Npz8meGs",
+          "name": "Gmail account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "limit": "={{ $fromAI(\"limit\") }}",
+        "simple": false,
+        "filters": {
+          "sender": "={{ $fromAI(\"senderEmail\") }}"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmailTool",
+      "typeVersion": 2.1,
+      "position": [
+        368,
+        208
+      ],
+      "id": "18cb58f6-49c7-4a9a-aa0a-16998d0c6e40",
+      "name": "Get messages",
+      "webhookId": "d5f25d5f-ef22-4a15-a511-eedb41be1ab1",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "cx4xJr91Npz8meGs",
+          "name": "Gmail account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "256b0e12-a97e-4bd0-8353-b095f01e2fa3",
+              "name": "Response",
+              "value": "={{ $json.output }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        560,
+        0
+      ],
+      "id": "1812b31a-94e6-47a2-9bee-e38761106a50",
+      "name": "Response"
+    }
+  ],
+  "pinData": {
+    "When Executed by Another Workflow": [
+      {
+        "json": {
+          "query": "can u grab my past 2 emails from Aron (sriramparthiban2003@gmail.com)"
+        }
+      }
+    ]
+  },
+  "connections": {
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sending Email": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get messages": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "e535380d-aa0a-4e12-81ee-de8a1cbd6f05",
+  "meta": {
+    "instanceId": "0bc77d1e83eb271c93d761935713d306621ca9e7f4a7a40c1c9c6764db49cd61"
+  },
+  "id": "hY0zD5bqhDueyKFj",
+  "tags": []
+}
